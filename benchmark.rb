@@ -106,6 +106,84 @@ def run_toggle(n)
   end
 end
 
+class Array
+  def qsort
+    return [] if self.empty?
+
+    pivot, *tail = self
+    (tail.select {|el| el < pivot}).qsort + [pivot] +
+      (tail.select {|el| el >= pivot}).qsort
+  end
+
+  def msort
+    len = self.length
+    return self if len <= 1
+    middle = len / 2
+    left = self.slice(0, middle).msort
+    right = self.slice(middle, len - middle).msort
+    merge(left, right)
+  end
+
+  protected
+
+  def merge(left, right)
+    result = []
+
+    while (left.length > 0 && right.length > 0)
+      if (left.first < right.first)
+        result.push(left.shift)
+      else
+        result.push(right.shift)
+      end
+    end
+
+    if left.length > 0
+      result += left
+    end
+
+    if right.length > 0
+      result += right
+    end
+
+    result
+  end
+end
+
+def test_lists(size)
+  # create a list of integers (Li1) from 1 to SIZE
+  li1 = (1..size).to_a
+  # copy the list to li2 (not by individual items)
+  li2 = li1.dup
+  # remove each individual item from left side of li2 and
+  # append to right side of li3 (preserving order)
+  li3 = Array.new
+  while (not li2.empty?)
+    li3.push(li2.shift)
+  end
+  # li2 must now be empty
+  # remove each individual item from right side of li3 and
+  # append to right side of li2 (reversing list)
+  while (not li3.empty?)
+    li2.push(li3.pop)
+  end
+  # li3 must now be empty
+  # reverse li1 in place
+  li1.reverse!
+  # check that first item is now SIZE
+  if li1[0] != size then
+    p "not size"
+    0
+  else
+    # compare li1 and li2 for equality
+    if li1 != li2 then
+      return(0)
+    else
+      # return the length of the list
+      li1.length
+    end
+  end
+end
+
 Benchmark.bm(35) do |bm|
   bm.report("joining array of strings") do
     iterations.times do
@@ -222,6 +300,22 @@ Benchmark.bm(35) do |bm|
     [3_000, 30_000, 300_000, 3_000_000].each do |n|
       p = Prime::EratosthenesGenerator.new
       n.times { p.succ }
+    end
+  end
+
+  bm.report("quicksort") do
+    array = iterations.times.map {|n| rand(1..iterations)}
+    puts "Quicksort verified." if array.qsort == array.sort
+  end
+
+  bm.report("mergesort") do
+    array = iterations.times.map {|n| rand(1..iterations)}
+    puts "Mergesort verified." if array.msort == array.sort
+  end
+
+  bm.report("list manipulation") do
+    1_000.times do
+      test_lists(10_000)
     end
   end
 end
